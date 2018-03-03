@@ -97,8 +97,29 @@ class GrainBoundaryCollection(OrderedDict):
         Args:
             name (str): name of the property to build the vector for.
         """
-        values = self.properties[name]
-        return np.array([values[gbid] for gbid in self])
+        if name in self.properties:
+            values = self.properties[name]
+            return np.array([values[gbid] for gbid in self])
+        else:
+            values = []
+            scalar = False
+            for gb in self.values():
+                if hasattr(gb, name):
+                    vi = getattr(gb, name)
+                    if isinstance(vi, FortranArray):
+                        values.append(np.array(vi.T))
+                    else:
+                        values.append(vi)
+                elif name in gb.params:
+                    values.append(gb.params[name])
+                    scalar = True
+                else:
+                    break
+
+            if scalar:
+                return np.array(values)
+            else:
+                return values
         
     def add_property(self, name, filename=None, values=None, colindex=1,
                      delimiter=None, cast=float, skip=0):
@@ -520,6 +541,8 @@ class GrainBoundary(object):
         makelat (bool): when True, use the :func:`gblearn.lammps.make_lattice`
           function to construct the lattice from `box`; otherwise, use `box` as
           the lattice.
+        params (dict): key-value pairs that represent *scalar* parameters that
+          apply to the whole grain boundary.
         soapargs (dict): keyword arguments to pass to the constructor of the
           :class:`~gblearn.soap.SOAPCalculator` that will be used to calculate
           the `P` matrix for this GB.
@@ -538,12 +561,13 @@ class GrainBoundary(object):
           number in the collection's global unique set.
     """
     def __init__(self, xyz, types, box, Z, extras=None, selectargs=None,
-                 makelat=True, **soapargs):
+                 makelat=True, params=None, **soapargs):
         from gblearn.soap import SOAPCalculator
         from gblearn.lammps import make_lattice
         self.xyz = xyz.copy()
         self.types = types
-
+        self.params = params.copy() if params is not None else {}
+        
         if makelat:
             self.box = box
             self.lattice = make_lattice(box)
