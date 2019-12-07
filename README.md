@@ -1,5 +1,7 @@
 # `gblearn`: Machine Learning for Grain Boundaries
 
+This is an outdated version. Please see (https://github.com/rosenbrockc/gblearn) for the most recent.
+
 [API Documentation](https://rosenbrockc.github.io/gblearn/index.html)
 
 Recently, we proposed a universal descriptor for grain boundaries that
